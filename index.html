@@ -1,0 +1,261 @@
+
+
+<!DOCTYPE html>
+
+<html lang="ar" dir="rtl">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>AI Karton Studio</title>
+
+<style>
+
+*{box-sizing:border-box}
+
+body{
+
+ margin:0;
+
+ background:#101322;
+
+ color:white;
+
+ font-family:Arial,sans-serif;
+
+}
+
+header{
+
+ padding:25px 18px;
+
+ text-align:center;
+
+ background:#1b2034;
+
+}
+
+h1{margin:0;color:#8c9dff}
+
+p{color:#bfc5d8;line-height:1.7}
+
+main{max-width:650px;margin:auto;padding:20px}
+
+.card{
+
+ background:#1b2034;
+
+ padding:20px;
+
+ border-radius:18px;
+
+ margin-bottom:18px;
+
+}
+
+label{display:block;margin:15px 0 7px}
+
+input,select,textarea{
+
+ width:100%;
+
+ padding:13px;
+
+ border-radius:10px;
+
+ border:1px solid #444b65;
+
+ background:#111629;
+
+ color:white;
+
+ font-size:16px;
+
+}
+
+textarea{min-height:120px}
+
+button{
+
+ width:100%;
+
+ padding:15px;
+
+ margin-top:20px;
+
+ background:#6678ff;
+
+ color:white;
+
+ border:0;
+
+ border-radius:12px;
+
+ font-size:17px;
+
+ font-weight:bold;
+
+}
+
+.scene{
+
+ padding:15px;
+
+ background:#292f48;
+
+ border-radius:12px;
+
+ margin-top:12px;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<header>
+
+<h1>🎬 AI Karton Studio</h1>
+
+<p>استوديو صناعة أفلام الكرتون بالذكاء الاصطناعي</p>
+
+</header>
+
+<main>
+
+<div class="card">
+
+<h2>إنشاء فيلم جديد</h2>
+
+<label>اسم الفيلم</label>
+
+<input id="title" placeholder="مثلاً: سر الصندوق المضيء">
+
+<label>القصة</label>
+
+<textarea id="story" placeholder="اكتب قصة الفيلم هون..."></textarea>
+
+<label>نوع الفيلم</label>
+
+<select id="type">
+
+<option>كرتون ثلاثي الأبعاد</option>
+
+<option>كرتون ثنائي الأبعاد</option>
+
+<option>فيلم واقعي</option>
+
+</select>
+
+<label>اللغة</label>
+
+<select id="language">
+
+<option>العربية السورية</option>
+
+<option>الألمانية</option>
+
+<option>الإنكليزية</option>
+
+</select>
+
+<label>مدة الفيلم</label>
+
+<select id="duration">
+
+<option value="60">دقيقة واحدة</option>
+
+<option value="120">دقيقتان</option>
+
+<option value="300">5 دقائق</option>
+
+</select>
+
+<button onclick="createFilm()">🎬 إنشاء مشاهد الفيلم</button>
+
+</div>
+
+<div class="card" id="result" hidden>
+
+<h2 id="filmTitle"></h2>
+
+<p id="filmInfo"></p>
+
+<div id="scenes"></div>
+
+</div>
+
+</main>
+
+<script>
+
+function createFilm(){
+
+ const title=document.getElementById("title").value.trim();
+
+ const story=document.getElementById("story").value.trim();
+
+ if(!title||!story){
+
+  alert("اكتب اسم الفيلم والقصة أولاً");
+
+  return;
+
+ }
+
+ const duration=Number(document.getElementById("duration").value);
+
+ const count=Math.ceil(duration/10);
+
+ document.getElementById("filmTitle").textContent=title;
+
+ document.getElementById("filmInfo").textContent=
+
+ "مخطط أولي من "+count+" مشاهد. يمكنك تطوير وصف كل مشهد لاحقاً.";
+
+ const container=document.getElementById("scenes");
+
+ container.replaceChildren();
+
+ for(let i=0;i<count;i++){
+
+  const div=document.createElement("div");
+
+  div.className="scene";
+
+  const heading=document.createElement("strong");
+
+  heading.textContent="المشهد "+(i+1);
+
+  const description=document.createElement("p");
+
+  description.textContent=
+
+   "الوقت: "+(i*10)+"–"+Math.min((i+1)*10,duration)+" ثانية";
+
+  const field=document.createElement("textarea");
+
+  field.placeholder="اكتب وصف وحوار هذا المشهد...";
+
+  div.append(heading,description,field);
+
+  container.appendChild(div);
+
+ }
+
+ document.getElementById("result").hidden=false;
+
+ document.getElementById("result").scrollIntoView({behavior:"smooth"});
+
+}
+
+</script>
+
+</body>
+
+</html>
