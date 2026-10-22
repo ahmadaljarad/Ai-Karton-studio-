@@ -10,16 +10,16 @@
 <label for="story">القصة</label><textarea id="story" placeholder="اكتب القصة هون. كل جملة واضحة بتساعدنا نجهّز مشهداً مناسباً."></textarea>
 <label for="style">نوع الفيلم</label><select id="style"><option>كرتون ثلاثي الأبعاد</option><option>كرتون ثنائي الأبعاد</option><option>فيلم واقعي</option></select>
 <label for="language">اللغة</label><select id="language"><option>العربية السورية</option><option>الألمانية</option><option>الإنكليزية</option></select>
-<label for="duration">مدة الفيلم</label><select id="duration"><option value="30">30 ثانية</option><option value="60" selected>دقيقة</option><option value="120">دقيقتان</option><option value="300">5 دقائق</option></select>
+<label for="characters">وصف ثابت للشخصيات (للمحافظة على شكلها)</label><textarea id="characters" placeholder="مثلاً: سامر ولد سوري عمره 7 سنين، هودي أزرق وبنطال بيج وحذاء أحمر. فوفو ثعلب برتقالي صغير."></textarea><p class="character-hint">استخدم نفس الوصف بكل المشاهد. ثبات الشخصيات بالصور مو مضمون تماماً.</p><label for="duration">مدة الفيلم</label><select id="duration"><option value="30">30 ثانية</option><option value="60" selected>دقيقة</option><option value="120">دقيقتان</option><option value="300">5 دقائق</option></select>
 <div class="actions"><button id="aiGenerate">🤖 إنشاء سيناريو بالذكاء الاصطناعي</button></div><p class="muted">خدمة الذكاء الاصطناعي من Puter تتطلب اتصال إنترنت وقد تطلب تسجيل الدخول، وقد تُطبّق حدود استخدام أو رسوم على حسابك. راجع أي رسالة تكلفة قبل الموافقة. لا ترفع معلومات خاصة.</p><p id="aiStatus" class="muted" aria-live="polite"></p><div class="actions"><button id="generate">✨ جهّز المشاهد</button><button id="example" class="secondary">جرّب قصة سامر وفوفو</button></div>
 <p class="muted">تقسيم مبدئي يعتمد على النص والمدة، وليس توليداً آلياً بالذكاء الاصطناعي بعد.</p></section>
 <section id="output" class="card hidden"><h2 id="filmName"></h2><p id="info" class="muted"></p><div id="scenes"></div>
 <div class="actions"><button id="save">💾 حفظ على الجهاز</button><button id="export" class="secondary">📄 تصدير السيناريو</button><button id="copy" class="secondary">📋 نسخ أوصاف الحركة</button></div><p id="notice" class="muted" aria-live="polite"></p></section>
-</main><footer>النسخة 0.3 — الحفظ محلي؛ عند استخدام زر الذكاء الاصطناعي تُرسل القصة إلى Puter</footer>
+</main><footer>النسخة 0.4 — الصور والسيناريو عبر Puter عند الطلب؛ حفظ الصور منفصل عن حفظ نص المشروع</footer>
 <script>
 const $=id=>document.getElementById(id);
 let scenes=[];
-const getSettings=()=>({title:$('title').value.trim(),story:$('story').value.trim(),style:$('style').value,language:$('language').value,duration:Number($('duration').value)});
+const getSettings=()=>({title:$('title').value.trim(),story:$('story').value.trim(),style:$('style').value,language:$('language').value,duration:Number($('duration').value),characters:$('characters').value.trim()});
 function aiText(response){
  if(typeof response==='string')return response;
  const c=response?.message?.content;
@@ -63,6 +63,34 @@ function render(){
    area.addEventListener('input',()=>{s[key]=area.value});
    box.append(lab,area);
   });
+  const tools=document.createElement('div');tools.className='image-tools';
+  const generate=document.createElement('button');generate.textContent='🎨 توليد صورة المشهد';
+  const download=document.createElement('button');download.className='secondary';download.textContent='⬇️ حفظ الصورة';download.hidden=true;
+  const image=document.createElement('img');image.className='scene-image';image.alt='صورة المشهد '+(i+1);image.hidden=true;
+  const status=document.createElement('p');status.className='scene-status';status.setAttribute('aria-live','polite');
+  if(s.imageUrl){image.src=s.imageUrl;image.hidden=false;download.hidden=false}
+  generate.onclick=async()=>{
+   if(!window.puter?.ai?.txt2img){status.textContent='خدمة الصور مو متاحة حالياً. جرّب تحديث الصفحة.';return}
+   generate.disabled=true;generate.textContent='⏳ عم نولّد الصورة...';
+   status.textContent='قد تطلب الخدمة تسجيل دخول أو تأكيد تكلفة. راجع الرسالة قبل الموافقة.';
+   try{
+    const d=getSettings();
+    const imagePrompt='Create a single cinematic 16:9 film storyboard still, '+(d.style.includes('ثلاثي')?'3D animated family movie':d.style.includes('ثنائي')?'2D animation':'photorealistic film')+'. Consistent character design across scenes: '+(d.characters||'Keep character appearances identical between shots')+'. Scene: '+s.description+'. Additional action and framing: '+s.prompt+'. No text, no watermarks, no subtitles. Wide composition.';
+    const result=await puter.ai.txt2img(imagePrompt);
+    let url=typeof result==='string'?result:result?.src||result?.url||result?.image_url||'';
+    if(!url&&result instanceof Blob)url=URL.createObjectURL(result);
+    if(!url)throw new Error('الخدمة رجّعت صورة بصيغة غير مدعومة.');
+    image.src=url;image.hidden=false;download.hidden=false;s.imageUrl=url;
+    status.textContent='ظهرت الصورة! لحفظها بشكل دائم على الآيفون اضغط حفظ الصورة.';
+   }catch(e){status.textContent='تعذّر توليد الصورة: '+(e?.message||String(e))}
+   finally{generate.disabled=false;generate.textContent='🎨 إعادة توليد الصورة'}
+  };
+  download.onclick=()=>{
+   if(!s.imageUrl)return;
+   const a=document.createElement('a');a.href=s.imageUrl;a.download='scene-'+(i+1)+'.png';a.target='_blank';a.rel='noopener';a.click();
+   status.textContent='إذا فتحت الصورة بدل تنزيلها، اضغط عليها مطولاً واختر حفظ الصورة.';
+  };
+  tools.append(generate,download);box.append(tools,image,status);
   root.append(box);
  });
  $('output').classList.remove('hidden');
@@ -93,6 +121,7 @@ $('generate').onclick=()=>{
 };
 $('example').onclick=()=>{
  $('title').value='سر الصندوق المضيء';
+ $('characters').value='Samer: 7-year-old Syrian boy, short dark hair, blue hoodie, beige trousers, red sneakers, small backpack. Fofo: small friendly orange fox, white muzzle, expressive eyes. Keep outfits, facial features, colors, and proportions identical in every scene.';
  $('story').value='كان سامر والثعلب فوفو يتمشّوا بالغابة. لمح سامر نوراً ذهبياً خلف شجرة كبيرة. قربوا بحذر ولقوا صندوقاً غريباً. سمعوا صوتاً لطيفاً من الصندوق. فتح سامر الغطاء وطلعت فراشات مضيئة. دلّتهم الفراشات على طريق العودة. رجعوا مبسوطين ووعدوا يحافظوا على سر الغابة.';
  $('generate').click();
 };
@@ -107,5 +136,5 @@ $('copy').onclick=async()=>{
  const content=scenes.map((s,i)=>'Scene '+(i+1)+': '+s.prompt).join('\n\n');
  try{await navigator.clipboard.writeText(content);$('notice').textContent='تم نسخ أوصاف الحركة.'}catch(e){$('notice').textContent='النسخ غير متاح. استخدم تصدير السيناريو.'}
 };
-try{const saved=JSON.parse(localStorage.getItem('ai-karton-project')||'null');if(saved&&saved.settings&&Array.isArray(saved.scenes)){['title','story','style','language','duration'].forEach(k=>{if(saved.settings[k]!=null)$(k).value=saved.settings[k]});scenes=saved.scenes;render();$('notice').textContent='تم استرجاع آخر مشروع محفوظ.'}}catch(e){}
+try{const saved=JSON.parse(localStorage.getItem('ai-karton-project')||'null');if(saved&&saved.settings&&Array.isArray(saved.scenes)){['title','story','style','language','duration','characters'].forEach(k=>{if(saved.settings[k]!=null)$(k).value=saved.settings[k]});scenes=saved.scenes;render();$('notice').textContent='تم استرجاع آخر مشروع محفوظ.'}}catch(e){}
 </script></body></html>
