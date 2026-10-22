@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#101827"><title>AI Karton Studio</title>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#0b1120;color:#f8fafc;font-family:system-ui,-apple-system,Arial,sans-serif}header{background:linear-gradient(125deg,#243b83,#111827);padding:27px 18px;text-align:center}h1{margin:0;font-size:27px}header p{color:#d4ddff;margin-bottom:0}main{max-width:800px;margin:auto;padding:16px}.card{background:#192338;border:1px solid #2c3b55;border-radius:17px;padding:18px;margin:14px 0}label{display:block;margin:13px 0 6px;font-weight:600}input,textarea,select{width:100%;border:1px solid #43516b;border-radius:10px;padding:12px;background:#0d1729;color:white;font:inherit}textarea{min-height:90px;resize:vertical}button{background:#697df5;border:0;border-radius:10px;padding:12px 16px;color:white;font:inherit;font-weight:700;cursor:pointer}button.secondary{background:#33445e}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid #a5b4fc}.actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:15px}.actions button{flex:1;min-width:130px}.muted{color:#aab9d1;font-size:14px;line-height:1.7}.scene{border:1px solid #3b4b68;border-radius:12px;padding:14px;margin:12px 0;background:#111c30}.scene h3{margin:0 0 5px}.pill{display:inline-block;background:#293d69;padding:5px 10px;border-radius:20px;font-size:13px}.hidden{display:none}footer{text-align:center;color:#aab9d1;padding:20px;font-size:13px}
-</style></head><body>
+</style><script src="https://js.puter.com/v2/"></script></head><body>
 <header><h1>🎬 AI Karton Studio</h1><p>من الفكرة إلى مشاهد فيلمك — استوديو عربي مجاني</p></header>
 <main>
 <section class="card"><h2>مشروع فيلم جديد</h2>
@@ -11,15 +11,37 @@
 <label for="style">نوع الفيلم</label><select id="style"><option>كرتون ثلاثي الأبعاد</option><option>كرتون ثنائي الأبعاد</option><option>فيلم واقعي</option></select>
 <label for="language">اللغة</label><select id="language"><option>العربية السورية</option><option>الألمانية</option><option>الإنكليزية</option></select>
 <label for="duration">مدة الفيلم</label><select id="duration"><option value="30">30 ثانية</option><option value="60" selected>دقيقة</option><option value="120">دقيقتان</option><option value="300">5 دقائق</option></select>
-<div class="actions"><button id="generate">✨ جهّز المشاهد</button><button id="example" class="secondary">جرّب قصة سامر وفوفو</button></div>
+<div class="actions"><button id="aiGenerate">🤖 إنشاء سيناريو بالذكاء الاصطناعي</button></div><p class="muted">خدمة الذكاء الاصطناعي من Puter تتطلب اتصال إنترنت وقد تطلب تسجيل الدخول، وقد تُطبّق حدود استخدام أو رسوم على حسابك. راجع أي رسالة تكلفة قبل الموافقة. لا ترفع معلومات خاصة.</p><p id="aiStatus" class="muted" aria-live="polite"></p><div class="actions"><button id="generate">✨ جهّز المشاهد</button><button id="example" class="secondary">جرّب قصة سامر وفوفو</button></div>
 <p class="muted">تقسيم مبدئي يعتمد على النص والمدة، وليس توليداً آلياً بالذكاء الاصطناعي بعد.</p></section>
 <section id="output" class="card hidden"><h2 id="filmName"></h2><p id="info" class="muted"></p><div id="scenes"></div>
 <div class="actions"><button id="save">💾 حفظ على الجهاز</button><button id="export" class="secondary">📄 تصدير السيناريو</button><button id="copy" class="secondary">📋 نسخ أوصاف الحركة</button></div><p id="notice" class="muted" aria-live="polite"></p></section>
-</main><footer>النسخة 0.2 — يعمل محلياً في المتصفح، بدون رفع قصتك إلى خادم</footer>
+</main><footer>النسخة 0.3 — الحفظ محلي؛ عند استخدام زر الذكاء الاصطناعي تُرسل القصة إلى Puter</footer>
 <script>
 const $=id=>document.getElementById(id);
 let scenes=[];
 const getSettings=()=>({title:$('title').value.trim(),story:$('story').value.trim(),style:$('style').value,language:$('language').value,duration:Number($('duration').value)});
+function aiText(response){
+ if(typeof response==='string')return response;
+ const c=response?.message?.content;
+ if(typeof c==='string')return c;
+ if(Array.isArray(c))return c.map(x=>typeof x==='string'?x:(x?.text||'')).join('');
+ return response?.text||'';
+}
+function parseAiScenes(raw,count,duration,style){
+ let clean=raw.trim().replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'');
+ let obj;
+ try{obj=JSON.parse(clean)}catch(e){
+  const a=clean.indexOf('['),b=clean.lastIndexOf(']');
+  if(a<0||b<a)throw new Error('الرد مو بصيغة مشاهد واضحة. جرّب مرة تانية.');
+  obj=JSON.parse(clean.slice(a,b+1));
+ }
+ const arr=Array.isArray(obj)?obj:obj.scenes;
+ if(!Array.isArray(arr)||!arr.length)throw new Error('ما وصلتنا مشاهد صالحة.');
+ return Array.from({length:count},(_,i)=>{
+  const x=arr[i]||arr[arr.length-1],description=String(x.description||x.scene||'').slice(0,1800);
+  return {start:i*10,end:Math.min((i+1)*10,duration),description,dialogue:String(x.dialogue||'').slice(0,1000),prompt:String(x.prompt||promptFor(description,style)).slice(0,2000)};
+ });
+}
 function splitStory(story,count){
  const parts=story.split(/[.!؟\n]+/).map(s=>s.trim()).filter(Boolean);
  if(!parts.length)return Array(count).fill('');
@@ -45,6 +67,24 @@ function render(){
  });
  $('output').classList.remove('hidden');
 }
+$('aiGenerate').onclick=async()=>{
+ const d=getSettings();
+ if(!d.story){alert('اكتب فكرة أو قصة أولاً');return}
+ if(!window.puter?.ai?.chat){$('aiStatus').textContent='خدمة الذكاء الاصطناعي ما تحمّلت. تأكد من الإنترنت وحدّث الصفحة.';return}
+ const button=$('aiGenerate');button.disabled=true;button.textContent='⏳ عم نكتب السيناريو...';
+ $('aiStatus').textContent='عم نتواصل مع خدمة Puter. ممكن يطلب منك تسجيل الدخول.';
+ try{
+  const count=Math.ceil(d.duration/10);
+  const prompt='You are a professional family-friendly screenplay writer. Generate exactly '+count+' consecutive scenes of about 10 seconds each for a '+d.style+' film. Write descriptions and dialogue in '+d.language+'. Keep character appearances consistent and story coherent. User idea: '+d.story+'. Return ONLY a JSON array, no markdown, with exactly '+count+' objects each with keys description (vivid scene actions and visuals in chosen language), dialogue (short spoken lines in chosen language), prompt (English cinematic animation prompt specifying characters, setting, camera movement, action, visual consistency, no subtitles). No additional text.';
+  const response=await puter.ai.chat(prompt,{model:'openai/gpt-5.4-nano'});
+  const result=aiText(response);if(!result)throw new Error('ما وصل نص من النموذج.');
+  const generated=parseAiScenes(result,count,d.duration,d.style);
+  scenes=generated;
+  if(!d.title)$('title').value='فيلم جديد';
+  render();$('aiStatus').textContent='تم إنشاء السيناريو. راجع المشاهد قبل حفظها.';$('output').scrollIntoView({behavior:'smooth'});
+ }catch(e){$('aiStatus').textContent='تعذّر إنشاء السيناريو: '+(e?.message||String(e))+'. فيك تستخدم زر جهّز المشاهد العادي.'}
+ finally{button.disabled=false;button.textContent='🤖 إنشاء سيناريو بالذكاء الاصطناعي'}
+};
 $('generate').onclick=()=>{
  const d=getSettings();if(!d.title||!d.story){alert('اكتب اسم الفيلم والقصة أولاً');return}
  const count=Math.ceil(d.duration/10),parts=splitStory(d.story,count);
