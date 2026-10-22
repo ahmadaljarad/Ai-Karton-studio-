@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#101827"><title>AI Karton Studio</title>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#0b1120;color:#f8fafc;font-family:system-ui,-apple-system,Arial,sans-serif}header{background:linear-gradient(125deg,#243b83,#111827);padding:27px 18px;text-align:center}h1{margin:0;font-size:27px}header p{color:#d4ddff;margin-bottom:0}main{max-width:800px;margin:auto;padding:16px}.card{background:#192338;border:1px solid #2c3b55;border-radius:17px;padding:18px;margin:14px 0}label{display:block;margin:13px 0 6px;font-weight:600}input,textarea,select{width:100%;border:1px solid #43516b;border-radius:10px;padding:12px;background:#0d1729;color:white;font:inherit}textarea{min-height:90px;resize:vertical}button{background:#697df5;border:0;border-radius:10px;padding:12px 16px;color:white;font:inherit;font-weight:700;cursor:pointer}button.secondary{background:#33445e}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid #a5b4fc}.actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:15px}.actions button{flex:1;min-width:130px}.muted{color:#aab9d1;font-size:14px;line-height:1.7}.scene{border:1px solid #3b4b68;border-radius:12px;padding:14px;margin:12px 0;background:#111c30}.scene h3{margin:0 0 5px}.pill{display:inline-block;background:#293d69;padding:5px 10px;border-radius:20px;font-size:13px}.hidden{display:none}footer{text-align:center;color:#aab9d1;padding:20px;font-size:13px}
-</style><script src="https://js.puter.com/v2/"></script></head><body>
+.studio-preview{width:100%;aspect-ratio:16/9;background:#050a13;border-radius:12px}.studio-controls{display:flex;gap:8px;flex-wrap:wrap}.studio-controls button{flex:1}.upload-note{font-size:12px;color:#aab9d1}</style><script src="https://js.puter.com/v2/"></script></head><body>
 <header><h1>🎬 AI Karton Studio</h1><p>من الفكرة إلى مشاهد فيلمك — استوديو عربي مجاني</p></header>
 <main>
 <section class="card"><h2>مشروع فيلم جديد</h2>
@@ -14,8 +14,8 @@
 <div class="actions"><button id="aiGenerate">🤖 إنشاء سيناريو بالذكاء الاصطناعي</button></div><p class="muted">خدمة الذكاء الاصطناعي من Puter تتطلب اتصال إنترنت وقد تطلب تسجيل الدخول، وقد تُطبّق حدود استخدام أو رسوم على حسابك. راجع أي رسالة تكلفة قبل الموافقة. لا ترفع معلومات خاصة.</p><p id="aiStatus" class="muted" aria-live="polite"></p><div class="actions"><button id="generate">✨ جهّز المشاهد</button><button id="example" class="secondary">جرّب قصة سامر وفوفو</button></div>
 <p class="muted">تقسيم مبدئي يعتمد على النص والمدة، وليس توليداً آلياً بالذكاء الاصطناعي بعد.</p></section>
 <section id="output" class="card hidden"><h2 id="filmName"></h2><p id="info" class="muted"></p><div id="scenes"></div>
-<div class="actions"><button id="save">💾 حفظ على الجهاز</button><button id="export" class="secondary">📄 تصدير السيناريو</button><button id="copy" class="secondary">📋 نسخ أوصاف الحركة</button></div><p id="notice" class="muted" aria-live="polite"></p></section>
-</main><footer>النسخة 0.5 — فيديو تجريبي مجاني أو تحريك حقيقي باختيارك؛ الفيديو الحقيقي قد يستهلك رصيد Puter</footer>
+<section class="card" id="nativeStudio"><h2>🎞️ محرّك الأفلام الخاص فينا</h2><p class="muted">معاينة فيلم من صور المشاهد بحركة كاميرا وانتقالات ناعمة، بدون Puter وبدون رسوم. الصور التي تختارها من جهازك لا تُرفع لأي خادم.</p><canvas id="filmCanvas" class="studio-preview" width="960" height="540"></canvas><label for="filmSpeed">سرعة المعاينة</label><select id="filmSpeed"><option value="1">عادية — 10 ثوانٍ لكل مشهد</option><option value="2">سريعة — 5 ثوانٍ لكل مشهد</option><option value="5">تجربة سريعة — ثانيتان لكل مشهد</option></select><div class="studio-controls"><button id="previewFilm">▶️ معاينة الفيلم</button><button id="stopFilm" class="secondary">⏹️ إيقاف</button><button id="recordFilm" class="secondary">⏺️ تسجيل فيديو WebM</button></div><p id="studioStatus" class="muted" aria-live="polite">ولّد صور للمشاهد أو ارفع صورك، وبعدين اضغط معاينة.</p></section><div class="actions"><button id="save">💾 حفظ على الجهاز</button><button id="export" class="secondary">📄 تصدير السيناريو</button><button id="copy" class="secondary">📋 نسخ أوصاف الحركة</button></div><p id="notice" class="muted" aria-live="polite"></p></section>
+</main><footer>النسخة 0.6 — محرّك أفلام محلي مجاني + خدمات ذكاء اصطناعي اختيارية</footer>
 <script>
 const $=id=>document.getElementById(id);
 let scenes=[];
@@ -124,6 +124,18 @@ function render(){
    videoStatus.textContent='إذا فتح الفيديو بدل تنزيله، استخدم خيار المشاركة أو حفظ الفيديو من المتصفح.';
   };
   videoTools.append(mode,animate,saveVideo);box.append(videoTools,video,videoStatus);
+  const upload=document.createElement('input');upload.type='file';upload.accept='image/*';upload.setAttribute('aria-label','رفع صورة المشهد '+(i+1));
+  const uploadLabel=document.createElement('label');uploadLabel.textContent='📁 أو ارفع صورتك الخاصة للمشهد (مجاني)';
+  upload.onchange=()=>{
+   const file=upload.files?.[0];if(!file)return;
+   if(!file.type.startsWith('image/')){status.textContent='اختر ملف صورة فقط.';return}
+   if(s.localImageUrl?.startsWith('blob:'))URL.revokeObjectURL(s.localImageUrl);
+   s.localImageUrl=URL.createObjectURL(file);s.imageUrl=s.localImageUrl;
+   image.src=s.imageUrl;image.hidden=false;download.hidden=false;
+   status.textContent='تم تحميل الصورة محلياً. احفظ الصورة الأصلية عندك؛ لن تبقى بعد إغلاق الصفحة.';
+  };
+  box.append(uploadLabel,upload);
+
 
   root.append(box);
  });
@@ -171,4 +183,90 @@ $('copy').onclick=async()=>{
  try{await navigator.clipboard.writeText(content);$('notice').textContent='تم نسخ أوصاف الحركة.'}catch(e){$('notice').textContent='النسخ غير متاح. استخدم تصدير السيناريو.'}
 };
 try{const saved=JSON.parse(localStorage.getItem('ai-karton-project')||'null');if(saved&&saved.settings&&Array.isArray(saved.scenes)){['title','story','style','language','duration','characters'].forEach(k=>{if(saved.settings[k]!=null)$(k).value=saved.settings[k]});scenes=saved.scenes;render();$('notice').textContent='تم استرجاع آخر مشروع محفوظ.'}}catch(e){}
+
+// Native browser film renderer: no AI service or server required.
+let filmFrame=0,filmRecording=null,filmStopRequested=false;
+const canvas=$('filmCanvas'),ctx=canvas.getContext('2d');
+function drawFilmPlaceholder(message){
+ ctx.fillStyle='#0b1120';ctx.fillRect(0,0,960,540);ctx.fillStyle='#e2e8f0';ctx.textAlign='center';ctx.font='26px system-ui';ctx.fillText(message,480,270);
+}
+drawFilmPlaceholder('🎞️ معاينة فيلمك');
+function loadFilmImage(url){
+ return new Promise(resolve=>{
+  if(!url){resolve(null);return}
+  const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>resolve(null);
+  img.crossOrigin='anonymous';img.src=url;
+ });
+}
+function drawFilmFrame(img,index,progress,nextImg,fade){
+ const w=960,h=540;
+ ctx.fillStyle='#070e1b';ctx.fillRect(0,0,w,h);
+ const paint=(picture,alpha,p)=>{
+  if(!picture)return;
+  ctx.save();ctx.globalAlpha=alpha;
+  const scale=Math.max(w/picture.naturalWidth,h/picture.naturalHeight)*(1.05+0.09*p);
+  const iw=picture.naturalWidth*scale,ih=picture.naturalHeight*scale;
+  const drift=(p-0.5)*24*(index%2===0?1:-1);
+  ctx.drawImage(picture,(w-iw)/2+drift,(h-ih)/2,iw,ih);ctx.restore();
+ };
+ paint(img,1,progress);
+ if(nextImg&&fade>0)paint(nextImg,fade,0);
+ if(!img&&!nextImg)drawFilmPlaceholder('المشهد '+(index+1)+' — أضف صورة أولاً');
+ ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillRect(0,500,960,40);
+ ctx.fillStyle='white';ctx.textAlign='right';ctx.font='20px system-ui';
+ ctx.fillText('المشهد '+(index+1)+' / '+scenes.length,930,526);
+}
+async function playNativeFilm(record){
+ if(!scenes.length){$('studioStatus').textContent='جهّز المشاهد أولاً.';return}
+ if(filmFrame){cancelAnimationFrame(filmFrame);filmFrame=0}
+ filmStopRequested=false;
+ $('previewFilm').disabled=true;$('recordFilm').disabled=true;
+ const images=await Promise.all(scenes.map(x=>loadFilmImage(x.imageUrl)));
+ if(!images.some(Boolean)){$('studioStatus').textContent='ما في صور للمشاهد. ولّد صورة أو ارفع صورة من جهازك.';$('previewFilm').disabled=false;$('recordFilm').disabled=false;return}
+ let recorder=null,chunks=[];
+ if(record){
+  if(!canvas.captureStream||typeof MediaRecorder==='undefined'){
+   $('studioStatus').textContent='تسجيل الفيديو غير مدعوم بهالمتصفح. المعاينة متاحة، جرّب Chrome على الكمبيوتر للتسجيل.';
+   $('previewFilm').disabled=false;$('recordFilm').disabled=false;return
+  }
+  try{
+   const stream=canvas.captureStream(24);
+   const mime=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'].find(t=>MediaRecorder.isTypeSupported(t));
+   if(!mime)throw Error('WebM غير مدعوم بهذا المتصفح');
+   recorder=new MediaRecorder(stream,{mimeType:mime});
+   recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};
+   recorder.onstop=()=>{
+    stream.getTracks().forEach(t=>t.stop());
+    if(!chunks.length)return;
+    const url=URL.createObjectURL(new Blob(chunks,{type:mime}));
+    const a=document.createElement('a');a.href=url;a.download='ai-karton-film.webm';a.click();
+    $('studioStatus').textContent='تم تجهيز تسجيل WebM. إذا ما نزل تلقائياً، جرّب Chrome على الكمبيوتر.';
+    setTimeout(()=>URL.revokeObjectURL(url),60000);
+   };
+   recorder.start(1000);
+  }catch(e){$('studioStatus').textContent='التسجيل غير متاح: '+e.message;$('previewFilm').disabled=false;$('recordFilm').disabled=false;return}
+ }
+ const duration=10000/Number($('filmSpeed').value),total=duration*scenes.length;
+ const start=performance.now();
+ $('studioStatus').textContent=record?'عم نسجّل الفيلم محلياً. خلّي الصفحة مفتوحة.':'عم نعرض الفيلم محلياً.';
+ await new Promise(resolve=>{
+  function frame(now){
+   const elapsed=Math.min(now-start,total);
+   const index=Math.min(scenes.length-1,Math.floor(elapsed/duration));
+   const progress=Math.min(1,(elapsed-index*duration)/duration);
+   const fade=progress>.88&&index<scenes.length-1?(progress-.88)/.12:0;
+   try{drawFilmFrame(images[index],index,progress,images[index+1],fade)}
+   catch(e){$('studioStatus').textContent='تعذّر رسم إحدى الصور بسبب قيود المتصفح.';filmStopRequested=true}
+   if(filmStopRequested||elapsed>=total){filmFrame=0;resolve();return}
+   filmFrame=requestAnimationFrame(frame);
+  }
+  filmFrame=requestAnimationFrame(frame);
+ });
+ if(recorder&&recorder.state!=='inactive')recorder.stop();
+ $('previewFilm').disabled=false;$('recordFilm').disabled=false;
+ if(!record)$('studioStatus').textContent=filmStopRequested?'توقفت المعاينة.':'انتهت المعاينة.';
+}
+$('previewFilm').onclick=()=>playNativeFilm(false);
+$('recordFilm').onclick=()=>playNativeFilm(true);
+$('stopFilm').onclick=()=>{filmStopRequested=true};
 </script></body></html>
