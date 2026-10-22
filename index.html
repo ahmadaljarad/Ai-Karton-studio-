@@ -15,7 +15,7 @@
 <p class="muted">تقسيم مبدئي يعتمد على النص والمدة، وليس توليداً آلياً بالذكاء الاصطناعي بعد.</p></section>
 <section id="output" class="card hidden"><h2 id="filmName"></h2><p id="info" class="muted"></p><div id="scenes"></div>
 <div class="actions"><button id="save">💾 حفظ على الجهاز</button><button id="export" class="secondary">📄 تصدير السيناريو</button><button id="copy" class="secondary">📋 نسخ أوصاف الحركة</button></div><p id="notice" class="muted" aria-live="polite"></p></section>
-</main><footer>النسخة 0.4 — الصور والسيناريو عبر Puter عند الطلب؛ حفظ الصور منفصل عن حفظ نص المشروع</footer>
+</main><footer>النسخة 0.5 — فيديو تجريبي مجاني أو تحريك حقيقي باختيارك؛ الفيديو الحقيقي قد يستهلك رصيد Puter</footer>
 <script>
 const $=id=>document.getElementById(id);
 let scenes=[];
@@ -91,6 +91,40 @@ function render(){
    status.textContent='إذا فتحت الصورة بدل تنزيلها، اضغط عليها مطولاً واختر حفظ الصورة.';
   };
   tools.append(generate,download);box.append(tools,image,status);
+  const videoTools=document.createElement('div');videoTools.className='image-tools';
+  const mode=document.createElement('select');mode.setAttribute('aria-label','وضع توليد الفيديو للمشهد '+(i+1));
+  [['test','🧪 تجربة مجانية (فيديو تجريبي، ليس تحريك صورتك)'],['real','🎬 تحريك الصورة فعلياً (قد يكلّف رصيداً)']].forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;mode.append(o)});
+  const animate=document.createElement('button');animate.textContent='🎬 إنشاء فيديو للمشهد';
+  const saveVideo=document.createElement('button');saveVideo.className='secondary';saveVideo.textContent='⬇️ حفظ الفيديو';saveVideo.hidden=true;
+  const video=document.createElement('video');video.controls=true;video.preload='metadata';video.playsInline=true;video.className='scene-image';video.hidden=true;
+  const videoStatus=document.createElement('p');videoStatus.className='scene-status';videoStatus.setAttribute('aria-live','polite');
+  if(s.videoUrl){video.src=s.videoUrl;video.hidden=false;saveVideo.hidden=false}
+  animate.onclick=async()=>{
+   if(!window.puter?.ai?.txt2vid){videoStatus.textContent='خدمة الفيديو غير متاحة حالياً، جرّب تحديث الصفحة.';return}
+   const real=mode.value==='real';
+   if(real&&!s.imageUrl){videoStatus.textContent='لازم تولّد صورة المشهد أولاً قبل تحريكها.';return}
+   if(real&&!confirm('تنبيه: توليد الفيديو الحقيقي عبر Puter قد يستهلك رصيداً مدفوعاً. هل تريد متابعة الطلب؟'))return;
+   animate.disabled=true;animate.textContent='⏳ جاري إنشاء الفيديو...';
+   videoStatus.textContent=real?'جاري تحريك الصورة. العملية ممكن تاخد عدة دقائق، لا تغلق الصفحة.':'جاري جلب فيديو تجريبي مجاني. لن يتحرك مشهدك الفعلي في وضع التجربة.';
+   try{
+    const d=getSettings();
+    const prompt='Animate the provided scene with subtle character movements, expressive faces and smooth cinematic camera motion. '+(d.characters?'Character appearance: '+d.characters+'. ':'')+'Scene: '+s.description+'. Motion direction: '+s.prompt+'. No subtitles or on-screen text.';
+    const opts=real?{model:'seedance-2-0-mini',seconds:5,size:'720p',input_reference:s.imageUrl,generate_audio:false}:{test_mode:true,model:'seedance-2-0-mini',seconds:5,size:'720p'};
+    const result=await puter.ai.txt2vid(prompt,opts);
+    const url=typeof result==='string'?result:result?.src||result?.url||'';
+    if(!url)throw new Error('لم ترجع الخدمة رابط فيديو صالح.');
+    video.src=url;video.hidden=false;saveVideo.hidden=false;s.videoUrl=url;
+    videoStatus.textContent=real?'الفيديو جاهز! نزّله فوراً لأن الرابط قد يكون مؤقتاً.':'هذا فيديو تجريبي من Puter وليس تحريكاً لصورتك. اختَر الوضع الحقيقي لتحريك الصورة، بعد مراجعة التكلفة.';
+   }catch(e){videoStatus.textContent='تعذّر إنشاء الفيديو: '+(e?.message||String(e))}
+   finally{animate.disabled=false;animate.textContent='🎬 إنشاء فيديو للمشهد'}
+  };
+  saveVideo.onclick=()=>{
+   if(!s.videoUrl)return;
+   const a=document.createElement('a');a.href=s.videoUrl;a.download='scene-'+(i+1)+'.mp4';a.target='_blank';a.rel='noopener';a.click();
+   videoStatus.textContent='إذا فتح الفيديو بدل تنزيله، استخدم خيار المشاركة أو حفظ الفيديو من المتصفح.';
+  };
+  videoTools.append(mode,animate,saveVideo);box.append(videoTools,video,videoStatus);
+
   root.append(box);
  });
  $('output').classList.remove('hidden');
